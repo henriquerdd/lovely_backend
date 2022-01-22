@@ -1,0 +1,30 @@
+version: '3.3'
+
+services:
+  postgres:
+    image: postgres:11-alpine
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    env_file: .env
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '5432:5432'
+    networks:
+      - 'lovelystay'
+
+  node:
+    image: node:10
+    env_file: .env
+    volumes:
+      - ./:/app
+    ports:
+      - '8080:8080'
+    networks:
+      - 'lovelystay'
+
+networks:
+  lovelystay:
+    name: lovelystay
