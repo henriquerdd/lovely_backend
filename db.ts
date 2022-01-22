@@ -6,28 +6,26 @@ const { database } = require("./config");
 // Limit the amount of debugging of SQL expressions
 const trimLogsSize: number = 200;
 
-const pgpDefaultConfig: Parameters<typeof pgPromise> = [
-  {
-    promiseLib: require("bluebird"),
-    // Log all querys
-    query(query) {
-      console.log("[SQL   ]", R.take(trimLogsSize, query.query));
-    },
-    // On error, please show me the SQL
-    error(err, e) {
-      if (e.query) {
-        console.error("[SQL   ]", R.take(trimLogsSize, e.query), err);
-      }
-    },
+const pgpDefaultConfig = {
+  promiseLib: require("bluebird"),
+  // Log all querys
+  query(query) {
+    console.log("[SQL   ]", R.take(trimLogsSize, query.query));
   },
-];
+  // On error, please show me the SQL
+  error(err, e) {
+    if (e.query) {
+      console.error("[SQL   ]", R.take(trimLogsSize, e.query), err);
+    }
+  },
+};
 
 console.info(
   "Connecting to the database:",
   `${database.user}@${database.host}:${database.port}/${database.database}`
 );
 
-const pgp = pgPromise(...pgpDefaultConfig);
+const pgp = pgPromise(pgpDefaultConfig);
 const db = pgp(database);
 
 function init() {

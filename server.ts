@@ -2,7 +2,7 @@ require("dotenv").config();
 const request = require("request-promise");
 const commandLineArgs = require("command-line-args");
 
-const DB = require("db");
+const DB = require("./db");
 
 const optionDefinitions = [
   { name: "list", alias: "l", type: Boolean },
@@ -29,7 +29,7 @@ DB.init()
         },
         json: true,
       })
-        .then((data: GithubUsers) => DB.createGithubUser(data))
+        .then((data) => DB.createGithubUser(data))
         .then(({ id }) => console.log(id));
     }
   })
