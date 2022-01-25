@@ -1,36 +1,21 @@
 require("dotenv").config();
-const request = require("request-promise");
-const commandLineArgs = require("command-line-args");
 
-const DB = require("./db");
+import API from "./api";
+import { parseCommandLineArgs, AvailableCommands } from "./command-line-parser";
 
-const optionDefinitions = [
-  { name: "list", alias: "l", type: Boolean },
-  {
-    name: "user",
-    type: String,
-    multiple: false,
-    defaultOption: true,
-    defaultValue: "gaearon",
-  },
-];
+function run(): PromiseLike<void> {
+  const command = parseCommandLineArgs();
 
-const options = commandLineArgs(optionDefinitions);
+  console.log(command);
 
-DB.init()
-  .then(() => {
-    if (options.list) {
-      return DB.listGithubUsers().then((users) => console.log(users));
-    } else {
-      return request({
-        uri: `https://api.github.com/users/${options.user}`,
-        headers: {
-          "User-Agent": "Request-Promise",
-        },
-        json: true,
-      })
-        .then((data) => DB.createGithubUser(data))
-        .then(({ id }) => console.log(id));
-    }
-  })
-  .then(() => process.exit(0));
+  switch (command.name) {
+    case AvailableCommands.list:
+      return API.listGithubUsers(command.options);
+    case AvailableCommands.load:
+      return API.loadGithubUsers(command.options);
+    default:
+      console.log("Nothing to see here");
+  }
+}
+
+run().then(() => process.exit(0));

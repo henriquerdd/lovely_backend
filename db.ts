@@ -1,19 +1,20 @@
-const pgPromise = require("pg-promise");
-const R = require("ramda");
+import Bluebird from "bluebird";
+import * as pgPromise from "pg-promise";
+import * as R from "ramda";
 
-const { database } = require("./config");
+import { database } from "./config";
 
 // Limit the amount of debugging of SQL expressions
 const trimLogsSize: number = 200;
 
 const pgpDefaultConfig = {
-  promiseLib: require("bluebird"),
-  // Log all querys
-  query(query) {
+  promiseLib: Bluebird,
+  query: (query: { query: string }): void => {
+    // Log all querys
     console.log("[SQL   ]", R.take(trimLogsSize, query.query));
   },
-  // On error, please show me the SQL
-  error(err, e) {
+  error: (err: Error, e: { query?: string }): void => {
+    // On error, please show me the SQL
     if (e.query) {
       console.error("[SQL   ]", R.take(trimLogsSize, e.query), err);
     }
@@ -28,48 +29,52 @@ console.info(
 const pgp = pgPromise(pgpDefaultConfig);
 const db = pgp(database);
 
-function init() {
-  return db.none(
-    `
-      CREATE TABLE IF NOT EXISTS github_users (
-        id BIGSERIAL,
-        login TEXT,
-        name TEXT,
-        company TEXT,
-        UNIQUE(login)
-      );
-    `
-  );
-}
-
 interface GithubUsers {
   id: number;
   name: string;
   login: string;
   company: string;
+  blog: string;
+  email: string;
+  location: string;
+  bio: string;
+  hireable: boolean;
 }
 
-function createGithubUser(data: GithubUsers) {
+function createGithubUser(
+  data: GithubUsers
+): PromiseLike<Pick<GithubUsers, "id">> {
   return db.one(
     `
       INSERT INTO
-        github_users (login, name, company)
+        github_users (login, name, company, blog, email, location, bio, location, hireable)
       VALUES
-        ($[login], $[name], $[company])
+        ($[login], $[name], $[company], $[blog], $[email], $[location], $[bio], $[location], $[hireable])
       ON CONFLICT (login)
-        DO UPDATE SET name = $[name], company = $[company]
+        DO UPDATE SET name=$[name], company=$[company], blog=$[blog], email=$[email], location=$[location], bio=$[bio], location=$[location], hireable=$[hireable]
       RETURNING id;
     `,
     data
   );
 }
 
-function listGithubUsers() {
-  return db.manyOrNone("SELECT * FROM github_users");
+function listGithubUsers(
+  options: { locations?: string[]; language?: string[] } = {}
+): PromiseLike<GithubUsers[]> {
+  const locations = options.locations || [];
+
+  let query = [
+    "SELECT * FROM github_user",
+    locations.length
+      ? " WHERE (" +
+        locations
+          .map((location) => pgp.as.format(`location ILIKE %$1%`, [location]))
+          .join(" OR ") +
+        ")"
+      : "",
+  ].join("");
+
+  return db.manyOrNone(query);
 }
 
-module.exports = {
-  init,
-  createGithubUser,
-  listGithubUsers,
-};
+export default { createGithubUser, listGithubUsers };
