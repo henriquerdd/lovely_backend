@@ -1,4 +1,4 @@
-import { Promise } from "bluebird";
+import { Promise, Thenable } from "bluebird";
 import * as pgPromise from "pg-promise";
 import * as R from "ramda";
 
@@ -51,7 +51,7 @@ function findLanguagesBySlug(slugs: string[]) {
   );
 }
 
-function createLanguages(languages: string[]) {
+function getLanguageIds(languages: string[]) {
   const languageSlugs = languages.map(slugify);
 
   return findLanguagesBySlug(languageSlugs).then((existingLanguages) => {
@@ -120,13 +120,13 @@ function createGithubUser(
     .then((user) => {
       if (!data.languages || !data.languages.length) return user;
 
-      return createLanguages(data.languages)
+      return getLanguageIds(data.languages)
         .then((languageIds) => linkUserAndLanguages(user.id, languageIds))
         .then(() => user);
     });
 }
 
-function findUserIdsWithLanguage(language: string): PromiseLike<number[]> {
+function findUserIdsWithLanguage(language: string) {
   const query = `
     SELECT
       gul.user_id as id
@@ -161,7 +161,7 @@ function listGithubUsers(
     limit?: number;
   } = {}
 ) {
-  let promise: PromiseLike<number[]> = options.language
+  let promise = options.language
     ? findUserIdsWithLanguage(options.language)
     : Promise.resolve([]);
 
@@ -176,15 +176,17 @@ function listGithubUsers(
       " LIMIT $[limit] OFFSET $[offset]",
     ].join("");
 
-    const limit = Math.min(
-      options.limit || maxRecordsPerPage,
-      maxRecordsPerPage
+    const limit = Math.max(
+      Math.min(options.limit || maxRecordsPerPage, maxRecordsPerPage),
+      1
     );
+
+    const offset = (Math.max(options.page || 1, 1) - 1) * limit;
 
     const usersPromise = db.manyOrNone(query, {
       ids,
       location: options.location ? `%${options.location}%` : "",
-      offset: ((options.page || 1) - 1) * limit,
+      offset,
       limit,
     });
 

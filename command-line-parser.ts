@@ -3,6 +3,7 @@ import * as commandLineArgs from "command-line-args";
 export enum AvailableCommands {
   list = "list",
   load = "load",
+  help = "help",
 }
 
 type ListCommandOptions = {
@@ -28,7 +29,7 @@ type ParsedCommand =
     };
 
 const COMMAND_DEFINITION: commandLineArgs.OptionDefinition[] = [
-  { name: "command", defaultOption: true },
+  { name: "command", defaultOption: true, defaultValue: "help" },
 ];
 
 function parseListCommandOptions(argv: string[]): ListCommandOptions {
@@ -53,11 +54,6 @@ function parseLoadCommandOptions(argv: string[]): LoadCommandOptions {
         defaultOption: true,
         defaultValue: "gaearon",
       },
-      {
-        name: "location",
-        type: String,
-        alias: "l",
-      },
     ],
     { argv }
   ) as LoadCommandOptions;
@@ -69,6 +65,7 @@ const OPTIONS_PARSERS: Record<
 > = {
   [AvailableCommands.list]: parseListCommandOptions,
   [AvailableCommands.load]: parseLoadCommandOptions,
+  [AvailableCommands.help]: () => ({}),
 };
 
 export function parseCommandLineArgs(): ParsedCommand {

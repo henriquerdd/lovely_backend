@@ -3,14 +3,11 @@ import { Promise } from "bluebird";
 import DB from "./db";
 import Github from "./github_api";
 
-function listGithubUsers(options: {
-  location?: string;
-  language?: string;
-}): PromiseLike<void> {
+function listGithubUsers(options: { location?: string; language?: string }) {
   return DB.listGithubUsers(options).then((users) => console.log(users));
 }
 
-function loadGithubUsers(options: { user?: string }): PromiseLike<void> {
+function loadGithubUsers(options: { user?: string }) {
   const username = options.user || "gaearon";
 
   return Promise.all([

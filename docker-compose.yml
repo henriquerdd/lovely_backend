@@ -7,18 +7,14 @@ services:
       - ./postgres/data:/var/lib/postgresql/data
       - ./postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     env_file: .env
-    environment:
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev123
-      POSTGRES_DB: lovelystay_test
-      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - '5432:5432'
     networks:
       - 'lovelystay'
 
   node:
-    image: node:10
+    build:
+      context: .
     env_file: .env
     volumes:
       - ./:/app
