@@ -7,6 +7,7 @@ import { slugify } from "./helpers";
 
 // Limit the amount of debugging of SQL expressions
 const trimLogsSize: number = 200;
+const maxRecordsPerPage: number = 30;
 
 const pgpDefaultConfig = {
   promiseLib: Promise,
@@ -153,7 +154,12 @@ function listUserLanguages(userId: number) {
 }
 
 function listGithubUsers(
-  options: { location?: string; language?: string } = {}
+  options: {
+    location?: string;
+    language?: string;
+    page?: number;
+    limit?: number;
+  } = {}
 ) {
   let promise: PromiseLike<number[]> = options.language
     ? findUserIdsWithLanguage(options.language)
@@ -167,11 +173,26 @@ function listGithubUsers(
       options.location || ids.length ? " WHERE " : "",
       options.location ? " location ILIKE $[location] " : "",
       ids.length ? " id IN ($[ids:csv]) " : "",
+      " LIMIT $[limit] OFFSET $[offset]",
     ].join("");
 
-    return db.manyOrNone(query, {
+    const limit = Math.min(
+      options.limit || maxRecordsPerPage,
+      maxRecordsPerPage
+    );
+
+    const usersPromise = db.manyOrNone(query, {
       ids,
       location: options.location ? `%${options.location}%` : "",
+      offset: ((options.page || 1) - 1) * limit,
+      limit,
+    });
+
+    return Promise.map(usersPromise, (user) => {
+      return listUserLanguages(user.id).then((languages) => {
+        user.languages = languages;
+        return user;
+      });
     });
   });
 }

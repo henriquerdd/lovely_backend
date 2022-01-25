@@ -8,6 +8,8 @@ export enum AvailableCommands {
 type ListCommandOptions = {
   location?: string;
   language?: string;
+  page?: number;
+  limit?: number;
 };
 
 type LoadCommandOptions = {
@@ -34,6 +36,8 @@ function parseListCommandOptions(argv: string[]): ListCommandOptions {
     [
       { name: "location", type: String, alias: "l" },
       { name: "language", type: String, alias: "L" },
+      { name: "page", type: Number, alias: "p" },
+      { name: "limit", type: Number, alias: "m" },
     ],
     { argv }
   ) as ListCommandOptions;
