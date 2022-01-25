@@ -6,12 +6,13 @@ export enum AvailableCommands {
 }
 
 type ListCommandOptions = {
-  location?: string[];
-  language?: string[];
+  location?: string;
+  language?: string;
 };
 
 type LoadCommandOptions = {
   user?: string;
+  location?: string;
 };
 
 type ParsedCommand =
@@ -31,8 +32,8 @@ const COMMAND_DEFINITION: commandLineArgs.OptionDefinition[] = [
 function parseListCommandOptions(argv: string[]): ListCommandOptions {
   return commandLineArgs(
     [
-      { name: "location", type: String, alias: "l", multiple: true },
-      { name: "language", type: String, alias: "L", multiple: true },
+      { name: "location", type: String, alias: "l" },
+      { name: "language", type: String, alias: "L" },
     ],
     { argv }
   ) as ListCommandOptions;
@@ -47,6 +48,11 @@ function parseLoadCommandOptions(argv: string[]): LoadCommandOptions {
         alias: "u",
         defaultOption: true,
         defaultValue: "gaearon",
+      },
+      {
+        name: "location",
+        type: String,
+        alias: "l",
       },
     ],
     { argv }

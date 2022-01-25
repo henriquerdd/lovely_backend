@@ -25,6 +25,7 @@
     "ramda": "^0.23.0",
     "request": "^2.81.0",
     "request-promise": "^4.2.0",
+    "slugify": "^1.6.5",
     "ts-node": "^3.0.2",
     "typescript": "^2.2.2",
     "winston": "^2.3.1"
