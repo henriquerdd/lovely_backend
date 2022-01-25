@@ -47,11 +47,11 @@ function createGithubUser(
   return db.one(
     `
       INSERT INTO
-        github_users (login, name, company, blog, email, location, bio, location, hireable)
+        github_user (login, name, company, blog, email, location, bio, hireable)
       VALUES
-        ($[login], $[name], $[company], $[blog], $[email], $[location], $[bio], $[location], $[hireable])
+        ($[login], $[name], $[company], $[blog], $[email], $[location], $[bio], $[hireable])
       ON CONFLICT (login)
-        DO UPDATE SET name=$[name], company=$[company], blog=$[blog], email=$[email], location=$[location], bio=$[bio], location=$[location], hireable=$[hireable]
+        DO UPDATE SET name=$[name], company=$[company], blog=$[blog], email=$[email], location=$[location], bio=$[bio], hireable=$[hireable]
       RETURNING id;
     `,
     data
