@@ -1,4 +1,5 @@
 import * as commandLineArgs from "command-line-args";
+import * as commandLineUsage from "command-line-usage";
 
 export enum AvailableCommands {
   list = "list",
@@ -82,3 +83,52 @@ export function parseCommandLineArgs(): ParsedCommand {
 
   throw new Error(`Unknown command: ${mainOptions.command}`);
 }
+
+export const usage = commandLineUsage([
+  {
+    header: "A very simple github backend api",
+    content: "Lists previously loaded users upon request",
+  },
+  {
+    header: "List",
+    optionList: [
+      {
+        name: "location",
+        alias: "l",
+        description: "Filters users by their location. Example: Lisbon",
+        type: String,
+      },
+      {
+        name: "language",
+        alias: "L",
+        description: "Filters users by their known languages. Example: PHP",
+        type: String,
+      },
+      {
+        name: "page",
+        alias: "p",
+        description: "Request a specific page. Min: 1",
+        type: Number,
+      },
+      {
+        name: "limit",
+        alias: "m",
+        description: "Request a batch of users of this size. Min: 1, Max: 30 ",
+        type: Number,
+      },
+    ],
+  },
+  {
+    header: "Load",
+    optionList: [
+      {
+        name: "user",
+        alias: "u",
+        description:
+          "Load a specific user. Defaults to 'gaearon' if not specified.",
+        type: String,
+        defaultValue: "gaearon",
+      },
+    ],
+  },
+]);

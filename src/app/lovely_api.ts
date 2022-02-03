@@ -1,7 +1,7 @@
 import { Promise } from "bluebird";
 
-import DB from "./db";
-import Github from "./github_api";
+import DB from "../data/db";
+import Github from "../data/github_api";
 
 function listGithubUsers(options: { location?: string; language?: string }) {
   return DB.listGithubUsers(options).then((users) => console.log(users));

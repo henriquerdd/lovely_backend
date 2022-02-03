@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
       "target":"es6"
-      , "module": "commonjs"
+      ,"module": "commonjs"
+      ,"outDir": "./dist"
       ,"sourceMap": true
       ,"noEmitOnError": true
       ,"noUnusedParameters":true

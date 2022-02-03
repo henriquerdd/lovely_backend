@@ -2,8 +2,8 @@ import { Promise, Thenable } from "bluebird";
 import * as pgPromise from "pg-promise";
 import * as R from "ramda";
 
-import { database } from "./config";
-import { slugify } from "./helpers";
+import { database } from "../config";
+import { slugify } from "../app/helpers";
 
 // Limit the amount of debugging of SQL expressions
 const trimLogsSize: number = 200;
