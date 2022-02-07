@@ -168,13 +168,19 @@ function listGithubUsers(
   return promise.then((ids: number[]) => {
     if (options.language && !ids.length) return [];
 
-    let query = [
-      "SELECT * FROM github_user",
-      options.location || ids.length ? " WHERE " : "",
-      options.location ? " location ILIKE $[location] " : "",
-      ids.length ? " id IN ($[ids:csv]) " : "",
-      " LIMIT $[limit] OFFSET $[offset]",
-    ].join("");
+    let where = "";
+
+    if (options.location) {
+      where += " location ILIKE $[location] ";
+    }
+
+    if (ids.length > 0) {
+      where += `${where.length > 0 ? "AND " : ""} id IN ($[ids:csv]) `;
+    }
+
+    where = where.length > 0 ? `WHERE ${where}` : "";
+
+    const query = `SELECT * FROM github_user ${where} LIMIT $[limit] OFFSET $[offset]`;
 
     const limit = Math.max(
       Math.min(options.limit || maxRecordsPerPage, maxRecordsPerPage),
