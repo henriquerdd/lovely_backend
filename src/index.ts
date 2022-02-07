@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Promise } from "bluebird";
+import * as Bluebird from "bluebird";
 
 import API from "./app/lovely_api";
 import {
@@ -8,13 +8,13 @@ import {
   usage,
 } from "./app/command-line-parser";
 
-function run() {
+function run(): Bluebird<void> {
   let command;
 
   try {
     command = parseCommandLineArgs();
   } catch (err) {
-    return Promise.reject(err);
+    return Bluebird.reject(err);
   }
 
   switch (command.name) {
@@ -24,12 +24,12 @@ function run() {
       return API.loadGithubUsers(command.options);
     case AvailableCommands.help:
       console.log(usage);
-      return Promise.resolve();
+      return Bluebird.resolve();
     default:
       console.log(usage);
   }
 
-  return Promise.resolve();
+  return Bluebird.resolve();
 }
 
 run()
@@ -37,4 +37,6 @@ run()
     console.error(err.message);
     console.log(usage);
   })
-  .finally(() => process.exit(0));
+  .finally(() => {
+    process.exit(0);
+  });

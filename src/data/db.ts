@@ -1,4 +1,4 @@
-import { Promise, Thenable } from "bluebird";
+import * as Bluebird from "bluebird";
 import * as pgPromise from "pg-promise";
 import * as R from "ramda";
 
@@ -9,29 +9,31 @@ import { slugify } from "../app/helpers";
 const trimLogsSize: number = 200;
 const maxRecordsPerPage: number = 30;
 
-const pgpDefaultConfig = {
-  promiseLib: Promise,
-  query: (query: { query: string }): void => {
-    // Log all querys
-    console.log("[SQL   ]", R.take(trimLogsSize, query.query));
+const pgpDefaultConfig: Parameters<typeof pgPromise> = [
+  {
+    promiseLib: Bluebird,
+    query: (query: { query: string }): void => {
+      // Log all querys
+      console.log("[SQL   ]", R.take(trimLogsSize, query.query));
+    },
+    error: (err: Error, e: { query?: string }): void => {
+      // On error, please show me the SQL
+      if (e.query) {
+        console.error("[SQL   ]", R.take(trimLogsSize, e.query), err);
+      }
+    },
   },
-  error: (err: Error, e: { query?: string }): void => {
-    // On error, please show me the SQL
-    if (e.query) {
-      console.error("[SQL   ]", R.take(trimLogsSize, e.query), err);
-    }
-  },
-};
+];
 
 console.info(
   "Connecting to the database:",
   `${database.user}@${database.host}:${database.port}/${database.database}`
 );
 
-const pgp = pgPromise(pgpDefaultConfig);
+const pgp = pgPromise(...pgpDefaultConfig);
 const db = pgp(database);
 
-interface GithubUsers {
+export interface GithubUser {
   id: number;
   name: string;
   login: string;
@@ -101,29 +103,27 @@ function linkUserAndLanguages(userId: number, languageIds: number[]) {
   return db.none(query);
 }
 
-function createGithubUser(
-  data: GithubUsers
-): PromiseLike<Pick<GithubUsers, "id">> {
-  return db
-    .one(
-      `
-      INSERT INTO
-        github_user (login, name, company, blog, email, location, bio, hireable)
-      VALUES
-        ($[login], $[name], $[company], $[blog], $[email], $[location], $[bio], $[hireable])
-      ON CONFLICT (login)
-        DO UPDATE SET name=$[name], company=$[company], blog=$[blog], email=$[email], location=$[location], bio=$[bio], hireable=$[hireable]
-      RETURNING id;
-    `,
-      data
-    )
-    .then((user) => {
-      if (!data.languages || !data.languages.length) return user;
+function createGithubUser(data: GithubUser): Bluebird<Pick<GithubUser, "id">> {
+  let userPromise = db.one(
+    `
+    INSERT INTO
+      github_user (login, name, company, blog, email, location, bio, hireable)
+    VALUES
+      ($[login], $[name], $[company], $[blog], $[email], $[location], $[bio], $[hireable])
+    ON CONFLICT (login)
+      DO UPDATE SET name=$[name], company=$[company], blog=$[blog], email=$[email], location=$[location], bio=$[bio], hireable=$[hireable]
+    RETURNING id;
+  `,
+    data
+  ) as Bluebird<GithubUser>;
 
-      return getLanguageIds(data.languages)
-        .then((languageIds) => linkUserAndLanguages(user.id, languageIds))
-        .then(() => user);
-    });
+  return userPromise.tap((user) => {
+    if (!data.languages || !data.languages.length) return;
+
+    return getLanguageIds(data.languages).then((languageIds) =>
+      linkUserAndLanguages(user.id, languageIds)
+    );
+  });
 }
 
 function findUserIdsWithLanguage(language: string) {
@@ -137,7 +137,7 @@ function findUserIdsWithLanguage(language: string) {
   `;
 
   const promise = db.manyOrNone(query, [slugify(language)]);
-  return Promise.map(promise, ({ id }) => id);
+  return Bluebird.map(promise, ({ id }) => id);
 }
 
 function listUserLanguages(userId: number) {
@@ -150,7 +150,7 @@ function listUserLanguages(userId: number) {
       gul.user_id = $1;`;
 
   const promise = db.manyOrNone(query, [userId]);
-  return Promise.map(promise, ({ name }) => name);
+  return Bluebird.map(promise, ({ name }) => name);
 }
 
 function listGithubUsers(
@@ -160,10 +160,10 @@ function listGithubUsers(
     page?: number;
     limit?: number;
   } = {}
-) {
+): Bluebird<GithubUser[]> {
   let promise = options.language
     ? findUserIdsWithLanguage(options.language)
-    : Promise.resolve([]);
+    : Bluebird.resolve([]);
 
   return promise.then((ids: number[]) => {
     if (options.language && !ids.length) return [];
@@ -190,7 +190,7 @@ function listGithubUsers(
       limit,
     });
 
-    return Promise.map(usersPromise, (user) => {
+    return Bluebird.map(usersPromise, (user) => {
       return listUserLanguages(user.id).then((languages) => {
         user.languages = languages;
         return user;
