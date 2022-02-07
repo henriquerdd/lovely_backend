@@ -63,7 +63,7 @@ function getLanguageIds(languages: string[]) {
       (language) => !existingLanguagesSet.has(slugify(language))
     );
 
-    if (!missingLanguages.length)
+    if (missingLanguages.length === 0)
       return existingLanguages.map((language) => language.id);
 
     const columnsSet = new pgp.helpers.ColumnSet(["name", "slug"], {
