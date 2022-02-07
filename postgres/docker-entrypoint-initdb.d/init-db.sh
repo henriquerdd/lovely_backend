@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+echo "SELECT 'CREATE DATABASE $DB_DATABASE' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DB_DATABASE')\gexec" | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DB_DATABASE" <<-EOSQL
   CREATE TABLE IF NOT EXISTS github_user (
     id BIGSERIAL,
     login VARCHAR(50) NOT NULL,
